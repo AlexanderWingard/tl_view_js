@@ -1,17 +1,17 @@
-var focus;
+var focus = undefined;
 function recalculate(data) {
     for(var i = 0; i < data.length; i++) {
-        var prev = get_previous_ts(data, i);
+        var prev = find_compare_ts(data, i);
         if(prev != undefined) {
-            data[i]["cols"][0] = format_timediff(data[i]["ts"], prev);
+            data[i]["cols"][0] = time_conversion(data[i]["ts"].diff(prev));
         }
     }
 }
-function format_timediff(now, then) {
-    return timeConversion(now.diff(then));
-}
 
-function get_previous_ts(data, index) {
+function find_compare_ts(data, index) {
+    if(focus != undefined) {
+        return focus;
+    }
     for(var i = index-1; i >= 0; i--) {
         if(data[i]["ts"].isValid()) {
             return data[i]["ts"];
@@ -19,17 +19,17 @@ function get_previous_ts(data, index) {
     }
 }
 
-function timeConversion(millisec) {
+function time_conversion(millisec) {
     var seconds = (millisec / 1000).toFixed(0);
     var minutes = (millisec / (1000 * 60)).toFixed(1);
     var hours = (millisec / (1000 * 60 * 60)).toFixed(1);
     var days = (millisec / (1000 * 60 * 60 * 24)).toFixed(1);
 
-    if (seconds < 60) {
+    if (Math.abs(seconds) < 60) {
         return seconds + " s";
-    } else if (minutes < 60) {
+    } else if (Math.abs(minutes) < 60) {
         return minutes + " m";
-    } else if (hours < 24) {
+    } else if (Math.abs(hours) < 24) {
         return hours + " h";
     } else {
         return days + " d";
@@ -45,12 +45,23 @@ function render(data) {
             .data(data);
     var enter = select
             .enter()
-            .append("tr");
+            .append("tr")
+            .on("click", function(d) {
+                if(focus == d["ts"]) {
+                    focus = undefined;
+                } else {
+                    focus = d["ts"];
+                }
+                render(data);
+            });
     var exit = select
             .exit()
             .remove();
     var merged = select
             .merge(enter)
+            .classed("active", function(d) {
+                return d["ts"] == focus;
+            })
             .each(render_cells);
 }
 
@@ -105,6 +116,7 @@ function init() {
 function test() {
    var test_string = `header
 2017-04-20 11:55:42 UTC+0200; start
+2017-04-20 16:58:27 UTC+0200; middle
 2017-04-20 19:58:27 UTC+0200; end`;
     handle_content(test_string);
 }
