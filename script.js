@@ -12,20 +12,22 @@ function render(data) {
             .remove();
     var merged = select
             .merge(enter)
-            .each(function(d) {
-                var select = d3.select(this)
-                        .selectAll("td")
-                        .data(d["cols"]);
-                var enter = select
-                        .enter()
-                        .append("td");
-                var exit = select
-                        .exit()
-                        .remove();
-                var merged = select
-                        .merge(enter)
-                        .text(function(d) { return d;});
-            });
+            .each(render_cells);
+}
+
+function render_cells(d) {
+    var select = d3.select(this)
+        .selectAll("td")
+        .data(d["cols"]);
+    var enter = select
+        .enter()
+        .append("td");
+    var exit = select
+        .exit()
+        .remove();
+    var merged = select
+        .merge(enter)
+        .text(function(d) { return d;});
 }
 
 function handle_content(str) {
