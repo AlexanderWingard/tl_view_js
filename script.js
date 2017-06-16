@@ -1,14 +1,16 @@
 var focus = undefined;
-function recalculate(data) {
+var data  = [];
+
+function recalculate() {
     for(var i = 0; i < data.length; i++) {
-        var prev = find_compare_ts(data, i);
-        if(prev != undefined) {
+        var prev = find_compare_ts(i);
+        if(prev != undefined && data[i]["ts"].isValid()) {
             data[i]["cols"][0] = time_conversion(data[i]["ts"].diff(prev));
         }
     }
 }
 
-function find_compare_ts(data, index) {
+function find_compare_ts(index) {
     if(focus != undefined) {
         return focus;
     }
@@ -36,8 +38,8 @@ function time_conversion(millisec) {
     }
 }
 
-function render(data) {
-    recalculate(data);
+function render() {
+    recalculate();
     var result = d3.select("#result");
 
     var select = result
@@ -47,12 +49,12 @@ function render(data) {
             .enter()
             .append("tr")
             .on("click", function(d) {
-                if(focus == d["ts"]) {
+                if(!d["ts"].isValid() || focus == d["ts"]) {
                     focus = undefined;
                 } else {
                     focus = d["ts"];
                 }
-                render(data);
+                render();
             });
     var exit = select
             .exit()
@@ -82,11 +84,11 @@ function render_cells(d) {
 
 function handle_content(str) {
     var lines = str.split("\n");
-    var rows = lines.map(function(line) {
+    data = lines.map(function(line) {
         var ts = moment(line.substring(0,19), "YYYY-MM-DD HH:mm:ss", true);
         return {"ts": ts, "cols": line.replace(/,/g, ", ").split(";")};
     });
-    render(rows);
+    render();
 }
 function handle_file_drop(e) {
     e.stopPropagation();
